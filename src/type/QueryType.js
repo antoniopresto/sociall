@@ -1,14 +1,19 @@
 // @flow
 
-import { GraphQLObjectType, GraphQLString, GraphQLNonNull, GraphQLID, GraphQLList } from 'graphql';
+import {
+  GraphQLObjectType,
+  GraphQLString,
+  GraphQLNonNull,
+  GraphQLID,
+  GraphQLList,
+} from 'graphql';
 import { connectionArgs, fromGlobalId } from 'graphql-relay';
 
 import UserType from './UserType';
 import { NodeField } from '../interface/NodeInterface';
-import { UserLoader } from '../loader';
+import { UserLoader, TweetLoader } from '../loader';
 import UserConnection from '../connection/UserConnection';
-import TweetType from './TweetType';
-import Tweet from '../model/Tweet';
+import TweetConnection from '../connection/TweetConnection';
 
 export default new GraphQLObjectType({
   name: 'Query',
@@ -17,7 +22,8 @@ export default new GraphQLObjectType({
     node: NodeField,
     me: {
       type: UserType,
-      resolve: (root, args, context) => (context.user ? UserLoader.load(context, context.user._id) : null),
+      resolve: (root, args, context) =>
+        context.user ? UserLoader.load(context, context.user._id) : null,
     },
     user: {
       type: UserType,
@@ -42,8 +48,9 @@ export default new GraphQLObjectType({
       resolve: (obj, args, context) => UserLoader.loadUsers(context, args),
     },
     tweets: {
-      type: new GraphQLList(TweetType),
-      resolve: (context, args) => Tweet.find({}),
+      args: connectionArgs,
+      type: TweetConnection.connectionType,
+      resolve: (_, args, ctx) => TweetLoader.loadTweets(ctx, args),
     },
   }),
 });

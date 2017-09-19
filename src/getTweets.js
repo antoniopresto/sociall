@@ -2,6 +2,7 @@ import Twitter from 'twitter';
 import { twitterConfig } from './config';
 import Tweet from './model/Tweet';
 const client = new Twitter(twitterConfig);
+import { CronJob } from 'cron';
 
 const INTERVAL = 1000 * 60;
 
@@ -22,7 +23,7 @@ function formatTweet(obj) {
     userDisplayName: _(obj, 'user.name'),
     avatar: _(obj, 'user.profile_image_url_https'),
     url: _(obj, 'entities.urls[0].url'),
-    stringData: JSON.stringify(obj, null, 2),
+    stringData: JSON.stringify(obj),
   };
 }
 
@@ -40,11 +41,19 @@ const searchAndSave = async () => {
   const bulk = Tweet.collection.initializeOrderedBulkOp();
 
   tweets.map(function(tweet) {
-    bulk.find({ id: tweet.id }).remove();
-    bulk.insert(formatTweet(tweet));
+    bulk
+      .find({ id: tweet.id })
+      .upsert()
+      .updateOne({
+        $setOnInsert: formatTweet(tweet),
+      });
   });
 
-  bulk.execute();
+  bulk.execute(function (err) {
+    if (err) console.log(err);
+  });
 };
 
-setInterval(searchAndSave, parseInt(INTERVAL, 10));
+// run every 30 cron secs
+const job = new CronJob('*/30 * * * * *', searchAndSave);
+job.start();

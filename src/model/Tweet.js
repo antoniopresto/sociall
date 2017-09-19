@@ -16,18 +16,23 @@ const Schema = new mongoose.Schema(
     },
     username: {
       type: String,
+      required: true,
     },
     userDisplayName: {
       type: String,
+      required: true,
     },
     avatar: {
       type: String,
+      required: true,
     },
     url: {
       type: String,
+      required: true,
     },
     stringData: {
       type: String,
+      required: true,
     },
   },
   {
