@@ -1,13 +1,8 @@
 import { graphql } from 'graphql';
 import { schema } from '../../schema';
-import {
-  User,
-} from '../../model';
-import { generateToken } from '../../auth';
-import {
-  getContext,
-  setupTest,
-} from '../../../test/helper';
+import { User } from '../../model';
+import { generateToken } from '../../getUser';
+import { getContext, setupTest } from '../../../test/helper';
 
 beforeEach(async () => await setupTest());
 

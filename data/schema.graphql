@@ -1,5 +1,5 @@
 input ChangePasswordInput {
-  oldPassword: String!
+  oldPassword: String
 
   # user new password
   password: String!
@@ -61,11 +61,12 @@ type Query {
   me: User
   user(id: ID!): User
   users(after: String, first: Int, before: String, last: Int, search: String): UserConnection
-  tweets: [Tweet]
+  tweets(after: String, first: Int, before: String, last: Int): TweetConnection
 }
 
 input RegisterEmailInput {
-  name: String!
+  firstName: String!
+  lastName: String!
   email: String!
   password: String!
   clientMutationId: String
@@ -73,6 +74,7 @@ input RegisterEmailInput {
 
 type RegisterEmailPayload {
   token: String
+  _id: String
   error: String
   clientMutationId: String
 }
@@ -84,8 +86,29 @@ type Tweet implements Node {
   created_at: String
   _id: Int
   text: String
-  metadata: String
-  source: String
+  username: String
+  userDisplayName: String
+  avatar: String
+  url: String
+  stringData: String
+}
+
+# A connection to a list of items.
+type TweetConnection {
+  # Information to aid in pagination.
+  pageInfo: PageInfo!
+
+  # A list of edges.
+  edges: [TweetEdge]
+}
+
+# An edge in a connection.
+type TweetEdge {
+  # The item at the end of the edge
+  node: Tweet
+
+  # A cursor for use in pagination
+  cursor: String!
 }
 
 # User data

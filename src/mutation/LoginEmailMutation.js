@@ -4,7 +4,7 @@ import { GraphQLString, GraphQLNonNull } from 'graphql';
 import { mutationWithClientMutationId } from 'graphql-relay';
 
 import { User } from '../model';
-import { generateToken } from '../auth';
+import { createJWToken } from '../auth/jwt';
 
 export default mutationWithClientMutationId({
   name: 'LoginEmail',
@@ -17,7 +17,7 @@ export default mutationWithClientMutationId({
     },
   },
   mutateAndGetPayload: async ({ email, password }) => {
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ 'emails.value': email.toLowerCase() });
 
     if (!user) {
       return {
@@ -36,7 +36,7 @@ export default mutationWithClientMutationId({
     }
 
     return {
-      token: generateToken(user),
+      token: createJWToken(user),
       error: null,
     };
   },

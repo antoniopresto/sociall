@@ -9,7 +9,7 @@ const babel = require('babel-core');
 
 import connectDatabase from './src/database';
 import * as M from './src/model';
-import { generateToken } from './src/auth';
+import { generateToken } from './src/getUser';
 
 // based on https://gist.github.com/princejwesley/a66d514d86ea174270210561c44b71ba
 /**
@@ -34,9 +34,7 @@ function preprocess(input) {
 
 function myEval(cmd, context, filename, callback) {
   const code = babel.transform(preprocess(cmd), {
-    plugins: [
-      ['transform-flow-strip-types'],
-    ],
+    plugins: [['transform-flow-strip-types']],
     presets: ['es2015', 'stage-0'],
   }).code;
   _eval(code, context, filename, callback);
@@ -66,5 +64,3 @@ let _eval;
     process.exit(1);
   }
 })();
-
-

@@ -10,20 +10,19 @@ import graphqlHttp from 'koa-graphql';
 import graphqlBatchHttpWrapper from 'koa-graphql-batch';
 import logger from 'koa-logger';
 import Router from 'koa-router';
-import { print } from 'graphql/language';
 
 import { schema } from './schema';
-import { jwtSecret } from './config';
-import { getUser } from './auth';
+import { APP_SECRET } from './auth/jwt';
+import { getUser } from './auth/getUser';
 import * as loaders from './loader';
 
 const app = new Koa();
 const router = new Router();
 
-app.keys = jwtSecret;
+app.keys = APP_SECRET;
 
 const graphqlSettingsPerReq = async req => {
-  const { user } = await getUser(req.header.authorization);
+  const { user } = await getUser((req.header.authorization || '').substring(4));
 
   const dataloaders = Object.keys(loaders).reduce(
     (dataloaders, loaderKey) => ({
@@ -68,7 +67,7 @@ router.all('/graphql/batch', bodyParser(), graphqlBatchHttpWrapper(graphqlServer
 // graphql standard route
 router.all('/graphql', graphqlServer);
 
-app.use(logger());
+// app.use(logger());
 app.use(cors());
 app.use(router.routes()).use(router.allowedMethods());
 

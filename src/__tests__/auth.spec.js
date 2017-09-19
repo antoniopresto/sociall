@@ -4,7 +4,7 @@ import { schema } from '../schema';
 import { User } from '../model';
 import { setupTest } from '../../test/helper';
 
-import { getUser, generateToken } from '../auth';
+import { getUser, generateToken } from '../getUser';
 
 const { ObjectId } = mongoose.Types;
 

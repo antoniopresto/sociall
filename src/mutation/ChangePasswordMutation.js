@@ -1,10 +1,5 @@
-import {
-  GraphQLString,
-  GraphQLNonNull,
-} from 'graphql';
-import {
-  mutationWithClientMutationId,
-} from 'graphql-relay';
+import { GraphQLString, GraphQLNonNull } from 'graphql';
+import { mutationWithClientMutationId } from 'graphql-relay';
 
 import UserType from '../type/UserType';
 import { UserLoader } from '../loader';
@@ -13,7 +8,7 @@ export default mutationWithClientMutationId({
   name: 'ChangePassword',
   inputFields: {
     oldPassword: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
     },
     password: {
       type: new GraphQLNonNull(GraphQLString),
@@ -22,12 +17,15 @@ export default mutationWithClientMutationId({
   },
   mutateAndGetPayload: async ({ oldPassword, password }, { user }) => {
     if (!user) {
-      throw new Error('invalid user');
+      return {
+        error: 'invalid user',
+      };
     }
 
-    const correctPassword = user.authenticate(oldPassword);
+    const correctPassword = oldPassword && user.authenticate(oldPassword);
 
-    if (!correctPassword) {
+    // user already had a registered password (not only social login)
+    if (user.password && !correctPassword) {
       return {
         error: 'INVALID_PASSWORD',
       };

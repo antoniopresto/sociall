@@ -1,21 +1,17 @@
 // @flow
 
-import {
-  GraphQLString,
-  GraphQLNonNull,
-} from 'graphql';
-import {
-  mutationWithClientMutationId,
-} from 'graphql-relay';
-import {
-  User,
-} from '../model';
-import { generateToken } from '../auth';
+import { GraphQLString, GraphQLNonNull } from 'graphql';
+import { mutationWithClientMutationId } from 'graphql-relay';
+import { User } from '../model';
+import { createJWToken } from '../auth/jwt';
 
 export default mutationWithClientMutationId({
   name: 'RegisterEmail',
   inputFields: {
-    name: {
+    firstName: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    lastName: {
       type: new GraphQLNonNull(GraphQLString),
     },
     email: {
@@ -25,8 +21,8 @@ export default mutationWithClientMutationId({
       type: new GraphQLNonNull(GraphQLString),
     },
   },
-  mutateAndGetPayload: async ({ name, email, password }) => {
-    let user = await User.findOne({ email: email.toLowerCase() });
+  mutateAndGetPayload: async ({ firstName, lastName, email, password }) => {
+    let user = await User.findOne({ 'emails.value': email.toLowerCase() });
 
     if (user) {
       return {
@@ -36,21 +32,27 @@ export default mutationWithClientMutationId({
     }
 
     user = new User({
-      name,
-      email,
+      emails: [{ value: email, provider: 'app' }],
+      firstName,
+      lastName,
       password,
     });
-    await user.save();
+    const created = await user.save();
 
     return {
-      token: generateToken(user),
+      token: createJWToken(created._id.toString()),
       error: null,
+      _id: created._id.toString(),
     };
   },
   outputFields: {
     token: {
       type: GraphQLString,
       resolve: ({ token }) => token,
+    },
+    _id: {
+      type: GraphQLString,
+      resolve: ({ _id }) => _id,
     },
     error: {
       type: GraphQLString,
