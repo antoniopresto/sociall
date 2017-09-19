@@ -5,7 +5,6 @@ import {
   GraphQLString,
   GraphQLNonNull,
   GraphQLID,
-  GraphQLList,
 } from 'graphql';
 import { connectionArgs, fromGlobalId } from 'graphql-relay';
 

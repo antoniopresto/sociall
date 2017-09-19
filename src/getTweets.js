@@ -4,8 +4,6 @@ import Tweet from './model/Tweet';
 const client = new Twitter(twitterConfig);
 import { CronJob } from 'cron';
 
-const INTERVAL = 1000 * 60;
-
 function _(o, qs) {
   const qa = qs.replace(/\[([0-9]*)]/gim, '.$1').split('.');
   return qa.reduce((prev, next) => {
