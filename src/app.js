@@ -8,13 +8,13 @@ import convert from 'koa-convert';
 import cors from 'kcors';
 import graphqlHttp from 'koa-graphql';
 import graphqlBatchHttpWrapper from 'koa-graphql-batch';
-import logger from 'koa-logger';
 import Router from 'koa-router';
 
 import { schema } from './schema';
 import { APP_SECRET } from './auth/jwt';
 import { getUser } from './auth/getUser';
 import * as loaders from './loader';
+import facebookAuth from './auth/facebook-auth';
 
 const app = new Koa();
 const router = new Router();
@@ -69,6 +69,8 @@ router.all('/graphql', graphqlServer);
 
 // app.use(logger());
 app.use(cors());
+
+facebookAuth(router);
 app.use(router.routes()).use(router.allowedMethods());
 
 export default app;

@@ -2,35 +2,43 @@ import { upsertUserFromFacebook } from './upsertUser';
 import { parseUrl } from './utils';
 import request from 'request-promise';
 import ms from 'ms';
-import { client_id, client_secret, scope, redirect_uri } from './config';
+import { facebookConfig } from '../config';
+import User from '../model/User';
+
+const { client_id, client_secret, scope, redirect_uri } = facebookConfig;
 
 /**
  * Clients can request JWT with a temporary code available
  * in redirected url after user successful login
  */
-function getJWTRequestHandler(app, database) {
-  app.get('/login', async (req, res, next) => {
+function getJWTRequestHandler(router) {
+  router.get('/login', async (ctx, next) => {
     // code, "issued-at"
-    const [code, iat] = (req.query.recover || '').split('.');
-    // above we don't return error information
-    // if tries to recover with invalid data
+    const [code, iat] = (ctx.query.code || '').split('.');
     if (!iat || !code) return next();
 
     // expired-at
     const eat = parseInt(iat) + ms('2 minutes');
     if (eat < Date.now()) return next();
 
-    const users = database.collection('app_users');
-    const user = await users.findOne({
+    const user = await User.findOne({
       'tokens.jwtRequestCode.value': code,
       'tokens.jwtRequestCode.iat': parseInt(iat),
     });
 
-    if (user) return res.end(user.tokens.jwt);
+    if (user) {
+      ctx.set('Content-Type', 'application/json');
+      ctx.body = JSON.stringify({ token: user.tokens.facebook });
+    }
     return next();
   });
 }
 
+/**
+ * Request access_token to facebook after user logs on facebook
+ * @param code - returned in url from facebook
+ * @returns {Promise.<*>}
+ */
 async function requestResourceOwnerToken(code) {
   let token;
 
@@ -53,6 +61,11 @@ async function requestResourceOwnerToken(code) {
   return token;
 }
 
+/**
+ * Request user facebook user profile
+ * @param access_token
+ * @returns {Promise.<*>}
+ */
 async function requestProfile(access_token) {
   let profile;
 
@@ -74,32 +87,36 @@ async function requestProfile(access_token) {
   return profile;
 }
 
-function handleOauthReturn(app, database) {
+function handleOauthReturn(router) {
   // facebook uses GET instead of spec that says to use POST
-  app.get('/login/facebook/return', async (req, res) => {
-    const code = req.query.code; // oauth code
+  router.get('/login/facebook/return', async (ctx, next) => {
+    const code = ctx.query.code; // oauth code
+
     const access_token = await requestResourceOwnerToken(code);
     const profile = await requestProfile(access_token);
 
-    if (!access_token || !profile) return res.status(401).end('');
+    if (!access_token || !profile) {
+      ctx.request.status = 401;
+      ctx.body = 'Unauthorized';
+      return next();
+    }
 
-    const result = await upsertUserFromFacebook(database, access_token, profile);
+    const result = await upsertUserFromFacebook(access_token, profile);
+
     if (result && result.tokens) {
-      // save jwt encrypted with cookie-session package
-      if (req.session) req.session.jwt = result.jwt;
-
       // with this code client can requests a JWT token
       const codeValue = result.tokens.jwtRequestCode.value;
       const codeIat = result.tokens.jwtRequestCode.iat;
-      return res.redirect(`/login/?code=${codeValue}.${codeIat}`);
+      return ctx.redirect(`/login/?code=${codeValue}.${codeIat}`);
     }
 
-    res.status(401).end('');
+    ctx.status = 401;
+    next();
   });
 }
 
-function handleLogin(app) {
-  app.get('/login/facebook', (req, res) => {
+function handleLogin(router) {
+  router.all('/login/facebook', ctx => {
     const url = parseUrl({
       client_id,
       redirect_uri,
@@ -107,11 +124,11 @@ function handleLogin(app) {
       host: 'https://www.facebook.com/dialog/oauth',
       response_type: 'code',
     });
-    res.redirect(url);
+    ctx.redirect(url);
   });
 }
 
-export default function facebookAuth({ app, database }) {
+export default function facebookAuth(router) {
   // Oauth2 https://alexbilbie.com/guide-to-oauth-2-grants/
   // - response_type with the value code
   // - client_id with the client identifier
@@ -128,7 +145,7 @@ export default function facebookAuth({ app, database }) {
   // - redirect_uri with the same redirect URI the user was redirect back to
   // - code with the authorization code from the query string
 
-  handleLogin(app);
-  handleOauthReturn(app, database);
-  getJWTRequestHandler(app, database);
+  handleLogin(router);
+  handleOauthReturn(router);
+  getJWTRequestHandler(router);
 }

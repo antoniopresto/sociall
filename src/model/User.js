@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { isEmail } from 'validator';
 
-const EmailSchema = new mongoose.Schema({
+const EmailSchema = {
   value: {
     type: String,
     index: true,
@@ -16,7 +16,7 @@ const EmailSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-});
+};
 
 const Schema = new mongoose.Schema(
   {
@@ -35,16 +35,15 @@ const Schema = new mongoose.Schema(
       index: true,
     },
     tokens: {
-      type: {}, // mixed type
+      type: mongoose.Schema.Types.Mixed,
     },
     socialProfiles: {
-      type: {},
+      type: mongoose.Schema.Types.Mixed,
     },
     password: {
       type: String,
       min: 6,
       max: 200,
-      required: true,
     },
   },
   {

@@ -32,22 +32,16 @@ const searchTweets = async () => {
 };
 
 const searchAndSave = async () => {
-  console.log('Searching tweets');
-  console.log();
-
   const tweets = await searchTweets();
   const bulk = Tweet.collection.initializeOrderedBulkOp();
 
   tweets.map(function(tweet) {
-    bulk
-      .find({ id: tweet.id })
-      .upsert()
-      .updateOne({
-        $setOnInsert: formatTweet(tweet),
-      });
+    bulk.find({ id: tweet.id }).upsert().updateOne({
+      $setOnInsert: formatTweet(tweet),
+    });
   });
 
-  bulk.execute(function (err) {
+  bulk.execute(function(err) {
     if (err) console.log(err);
   });
 };

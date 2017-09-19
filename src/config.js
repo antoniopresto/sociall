@@ -36,3 +36,11 @@ export const twitterConfig = (() => {
 
   return obj;
 })();
+
+// Facebook
+export const facebookConfig = {
+  client_id: process.env.FACEBOOK_LOGIN_ID,
+  client_secret: process.env.FACEBOOK_LOGIN_SECRET,
+  redirect_uri: `http://${process.env.ROOT_URL || 'localhost:3000'}/login/facebook/return`,
+  scope: 'email,public_profile',
+};
