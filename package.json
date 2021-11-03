@@ -28,7 +28,7 @@
     "q_": "^1.0.5",
     "request-promise": "^4.2.1",
     "twitter": "^1.7.1",
-    "validator": "^8.2.0"
+    "validator": "^13.7.0"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
